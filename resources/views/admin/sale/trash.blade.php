@@ -1,0 +1,208 @@
+@section('title', 'Sales trash')
+
+<x-app-layout>
+    <!-- Start Menu-->
+    <div class="widget mt-3">
+        <div class="widget-body">
+
+            <div class="d-flex align-items-center flex-wrap">
+                <nav aria-label="breadcrumb">
+                    {{ Breadcrumbs::render('sale trash') }}
+                </nav>
+
+                <div class="ms-md-auto ms-0">
+
+                    <a href="#search" class="btn btn-sm btn-primary" title="Search" data-bs-toggle="collapse" role="button" aria-expanded="false">
+                        <x-icons.search/>
+                    </a>
+
+                    <a href="{{ route('sale.create') }}" class="btn btn-sm btn-primary" title="Create new">
+                        <x-icons.create/>
+                    </a>
+                     <a href="{{ route('sale.trash') }}" class="btn btn-sm btn-primary" title="Reload page">
+                            <x-icons.refresh/>
+                    </a>
+
+                    <a href="{{ route('sale.index') }}" class="btn btn-sm btn-primary" title="Go back">
+                        <x-icons.back/>
+                    </a>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- End Menu-->
+
+    @include('admin.sale.search')
+
+        <div class="widget mt-3" id="print-widget">
+
+            <!-- Start print header =========================== -->
+            @include('layouts.partials.printHead')
+            <!-- End print header =========================== -->
+
+            <!-- Start widget head =========================== -->
+            <div class="widget-head">
+                <div class="d-flex align-items-center flex-wrap">
+                    <div>
+                        <h3>All trashes</h3>
+                        <small>About {{count($sales)}} results found</small>
+                    </div>
+                    <div class="ms-auto print-none">
+                        <a type="button" class="btn btn-sm btn-secondary" onclick="printable('print-widget')">
+                            <x-icons.print/>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+            <!-- End widget head =========================== -->
+
+            <div class="widget-body">
+                <form action="{{ route('product.trash') }}" method="POST">
+                    @csrf
+                    <!-- Start Table ============================================== -->
+                    <div class="table-responsive">
+                        <table class="table custom table-hover action-hover sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="p-0">
+                                        <label for="check-all" class="p-2 d-block">
+                                            <input type="checkbox" class="me-2" id="check-all">
+                                            <span>SL </span>
+                                        </label>
+                                    </th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Cable ID</th>
+                                    <th scope="col">Customer name</th>
+                                    <th scope="col">Mobile no</th>
+                                    <th scope="col">Package</th>
+                                    <th scope="col">Product</th>
+                                    <th scope="col" class="text-end">Total paid</th>
+                                    <th scope="col" class="text-end">Due</th>
+                                    <th scope="col" class="print-none text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                @php
+                                    $_totalPaid= 0;
+                                @endphp
+
+                                @forelse ($sales as $sale)
+
+                                @php
+                                    $_totalPaid += $sale->payments->sum("total_paid");
+                                @endphp
+
+                                <tr>
+                                    <th scope="row" class="p-0">
+                                        <label class="p-2 d-block">
+                                            <input type="checkbox" name="sales[]" value="{{ $sale->id }}" class="me-2">
+                                            {{ $sales->firstItem() + $loop->index }}.
+                                        </label>
+                                    </th>
+                                    <td>{{$sale->date->format('d M , Y')}}</td>
+                                    <td>{{$sale->cable_id}}</td>
+                                    <td>{{$sale->customer->name}}</td>
+                                    <td>{{$sale->customer->mobile_no}}</td>
+                                    <td>{{$sale->package->name ?? ""}}</td>
+                                    <td>{!!$sale->products->pluck('name')->join('<br/>') !!}</td>
+                                    <td class="text-end">{{number_format($sale->payments->sum('total_paid'),2)}}</td>
+                                    <td class="text-end">{{number_format($sale->total_due,2)}}</td>
+                                    <td class="print-none text-end">
+                                        <a href="{{route('product.restore',$sale->id)}}" title="Restore" class="btn btn-sm btn-outline-success">
+                                            <x-icons.restore/>
+                                        </a>
+
+                                        <a href="{{ route('product.permanentDelete', $sale->id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure, want to delete this data permanently?')" title="Permanent delete" >
+                                            <x-icons.trash/>
+                                        </a>
+
+                                    </td>
+                                </tr>
+
+                                @empty
+                                <tr>
+                                    <th colspan="6">Trash list is empty.</th>
+                                </tr>
+
+                                @endforelse
+
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <th class="text-end" colspan="7">Total </th>
+                                <th class="text-end">{{ number_format ($_totalPaid,2) }} </th>
+                                <th class="text-end">{{ number_format ($sales->sum('total_due'),2) }} </th>
+
+                                <th colspan="2">&nbsp;</th>
+                            </tr>
+                        </tfoot>
+                        </table>
+                    </div>
+                    <!-- End Table ============================================== -->
+                        <!-- submit button -->
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-success me-2" name="restore" value="1" onclick="return confirm('Do you want to restore all selected record(s)?')" {{ ($sales->count() > 0) ? '' : 'disabled'}}>Restore all</button>
+
+                        <button class="btn btn-sm  btn-danger" name="delete" value="1" onclick="return confirm('The selected record(s) will be delete permanently!')" {{ ($sales->count() > 0) ? '' : 'disabled'}}>Permanently delete</button>
+                    </div>
+                    <!-- submit button end -->
+                </form>
+
+
+             <!-- paginate -->
+                <div class="container-fluid mt-3 mb-3">
+                    <nav>
+                        {{ $sales->withQueryString()->links() }}
+                    </nav>
+                </div>
+                <!-- pagination end -->
+        </div>
+
+    @push('scripts')
+        <!-- checked all program script -->
+        <script>
+            // select master & child checkboxes
+            let masterCheckbox = document.getElementById("check-all"),
+                childCheckbox = document.querySelectorAll('[name="sales[]"]');
+
+            // add 'change' event into master checkbox
+            masterCheckbox.addEventListener("change", function() {
+                // add/remove attribute into child checkbox conditionally
+                for (var i = 0; i < childCheckbox.length; i++) {
+                    if(this.checked) {
+                        childCheckbox[i].checked = true; // add attribute
+                    } else {
+                        childCheckbox[i].checked = false; // add attribute
+                    }
+                }
+            });
+        </script>
+        <!-- checked all program script end -->
+    @endpush
+
+     @push('styles')
+
+        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.1.0/dist/css/tom-select.css" rel="stylesheet">
+
+    @endpush
+
+
+    @push('scripts')
+       <script src="https://cdn.jsdelivr.net/npm/tom-select@2.1.0/dist/js/tom-select.complete.min.js"></script>
+
+        <script>
+            new TomSelect("#select-beast",{
+                create: true,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                }
+            });
+        </script>
+    @endpush
+
+</x-app-layout>

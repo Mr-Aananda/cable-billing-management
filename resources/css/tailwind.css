@@ -1,0 +1,8 @@
+/**
+* This CSS file only for tailwindcss.
+* Do not delete this file.
+* Use `scss` folder to use bootstrap or any other css framework.
+*/
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
